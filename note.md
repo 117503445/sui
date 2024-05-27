@@ -1,3 +1,3 @@
 narwhal/Docker/README.md
 
-docker compose -f docker-compose.yml up
+docker compose -f docker-compose.yml up --build
