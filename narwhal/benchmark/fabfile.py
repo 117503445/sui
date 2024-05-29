@@ -22,7 +22,7 @@ def local(ctx, debug=True):
         'workers': 1,
         'rate': 50_000,
         'tx_size': 512,
-        'duration': 60,
+        'duration': 10,
     }
     node_params = {
         'header_num_of_batches_threshold': 32,
