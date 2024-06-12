@@ -113,6 +113,7 @@ struct Inner {
 impl Inner {
     /// Checks if the certificate is valid and can potentially be accepted into the DAG.
     fn sanitize_certificate(&self, certificate: Certificate) -> DagResult<Certificate> {
+        println!("Entering sanitize_certificate");
         ensure!(
             self.committee.epoch() == certificate.epoch(),
             DagError::InvalidEpoch {
@@ -127,10 +128,14 @@ impl Inner {
             DagError::TooOld(certificate.digest().into(), certificate.round(), gc_round)
         );
         // Verify the certificate (and the embedded header).
-        certificate.verify(&self.committee, &self.worker_cache)
+        let result = certificate.verify(&self.committee, &self.worker_cache);
+        println!("sanitize_certificate successful");
+        result
     }
 
+
     async fn append_certificate_in_aggregator(&self, certificate: Certificate) -> DagResult<()> {
+        println!("Entering append_certificate_in_aggregator");
         // Check if we have enough certificates to enter a new dag round and propose a header.
         let Some(parents) = self
             .certificates_aggregators
@@ -139,13 +144,16 @@ impl Inner {
             .or_insert_with(|| Box::new(CertificatesAggregator::new()))
             .append(certificate.clone(), &self.committee)
         else {
+            println!("append_certificate_in_aggregator successful");
             return Ok(());
         };
         // Send it to the `Proposer`.
-        self.tx_parents
+        let result = self.tx_parents
             .send((parents, certificate.round()))
             .await
-            .map_err(|_| DagError::ShuttingDown)
+            .map_err(|_| DagError::ShuttingDown);
+        println!("append_certificate_in_aggregator successful");
+        result
     }
 
     async fn accept_suspended_certificate(
@@ -174,7 +182,7 @@ impl Inner {
     ) -> DagResult<()> {
         let _scope = monitored_scope("Synchronizer::accept_certificate_internal");
 
-        debug!("Accepting certificate {:?}", certificate);
+        println!("Accepting certificate {:?}", certificate);
 
         let digest = certificate.digest();
 
@@ -360,12 +368,13 @@ impl Synchronizer {
         metrics: Arc<PrimaryMetrics>,
         primary_channel_metrics: &PrimaryChannelMetrics,
     ) -> Self {
+        println!("Entering Synchronizer::RecoverCertificates");
         let committee: &Committee = &committee;
         let genesis = Self::make_genesis(&protocol_config, committee);
         let highest_processed_round = certificate_store.highest_round_number();
         let highest_created_certificate = certificate_store.last_round(authority_id).unwrap();
         let gc_round = rx_consensus_round_updates.borrow().gc_round;
-        let (tx_own_certificate_broadcast, _rx_own_certificate_broadcast) =
+        let (tx_own_certificate_broadcast, mut _rx_own_certificate_broadcast) =
             broadcast::channel(CHANNEL_CAPACITY);
         let (tx_certificate_acceptor, mut rx_certificate_acceptor) = channel_with_total(
             CHANNEL_CAPACITY,
@@ -405,10 +414,18 @@ impl Synchronizer {
             state: tokio::sync::Mutex::new(State::default()),
         });
 
+        tokio::spawn(async move {
+
+            while let Ok(recv) =_rx_own_certificate_broadcast.recv().await {
+                println!("$$$ {:?}", recv);
+            }
+        });
+
         // Start a task to recover parent certificates for proposer.
         let inner_proposer = inner.clone();
         spawn_logged_monitored_task!(
             async move {
+                println!("Entering Synchronizer::RecoverCertificates");
                 let last_round_certificates = inner_proposer
                     .certificate_store
                     .last_two_rounds_certs()
@@ -418,12 +435,12 @@ impl Synchronizer {
                         .append_certificate_in_aggregator(certificate)
                         .await
                     {
-                        debug!(
-                            "Failed to recover certificate, assuming Narwhal is shutting down. {e}"
+                        println!("Failed to recover certificate, assuming Narwhal is shutting down. {e}"
                         );
                         return;
                     }
                 }
+                println!("Synchronizer::RecoverCertificates successful");
             },
             "Synchronizer::RecoverCertificates"
         );
@@ -444,7 +461,7 @@ impl Synchronizer {
                         // fetching should definitely be started.
                         // For other reasons of timing out, there is no harm to start fetching either.
                         let Some(inner) = weak_inner.upgrade() else {
-                            debug!("Synchronizer is shutting down.");
+                            println!("Synchronizer is shutting down.");
                             return;
                         };
                         if inner
@@ -453,7 +470,7 @@ impl Synchronizer {
                             .await
                             .is_err()
                         {
-                            debug!("Synchronizer is shutting down.");
+                            println!("Synchronizer is shutting down.");
                             return;
                         }
                         inner.metrics.synchronizer_gc_timeout.inc();
@@ -461,13 +478,13 @@ impl Synchronizer {
                         continue;
                     };
                     if result.is_err() {
-                        debug!("Synchronizer is shutting down.");
+                        println!("Synchronizer is shutting down.");
                         return;
                     }
                     let _scope = monitored_scope("Synchronizer::gc_iteration");
                     let gc_round = rx_consensus_round_updates.borrow().gc_round;
                     let Some(inner) = weak_inner.upgrade() else {
-                        debug!("Synchronizer is shutting down.");
+                        println!("Synchronizer is shutting down.");
                         return;
                     };
                     // this is the only task updating gc_round
@@ -507,11 +524,12 @@ impl Synchronizer {
         let weak_inner = Arc::downgrade(&inner);
         spawn_logged_monitored_task!(
             async move {
+                println!("Start a task to accept certificates.");
                 loop {
                     let Some((certificates, result_sender, early_suspend)) =
                         rx_certificate_acceptor.recv().await
                     else {
-                        debug!("Synchronizer is shutting down.");
+                        println!("Synchronizer is shutting down.");
                         return;
                     };
 
@@ -529,7 +547,7 @@ impl Synchronizer {
                     }
 
                     let Some(inner) = weak_inner.upgrade() else {
-                        debug!("Synchronizer is shutting down.");
+                        println!("Synchronizer is shutting down.");
                         return;
                     };
                     // Ignore error if receiver has been dropped.
@@ -542,10 +560,11 @@ impl Synchronizer {
             "Synchronizer::AcceptCertificates"
         );
 
-        // Start tasks to broadcast created certificates.
+        // Start tasks to broadcast created certificates..
         let inner_senders = inner.clone();
         spawn_logged_monitored_task!(
             async move {
+                println!("Start tasks to broadcast created certificates..");
                 let Ok(network) = client.get_primary_network().await else {
                     error!("Failed to get primary Network!");
                     return;
@@ -564,14 +583,16 @@ impl Synchronizer {
                     ));
                 }
                 if let Some(cert) = highest_created_certificate {
-                    // Error can be ignored.
-                    if tx_own_certificate_broadcast.send(cert).is_err() {
-                        error!("Failed to populate initial certificate to send to peers!");
+                    // tx_own_certificate_broadcast.receiver_count()
+                    if let Err(err) = tx_own_certificate_broadcast.send(cert.clone()) {
+                        println!("{:#?}", tx_own_certificate_broadcast.receiver_count());
+                        error!("Failed to populate initial certificate to send to peers: {:?}", err);
                     }
                 }
             },
             "Synchronizer::BroadcastCertificates"
         );
+
 
         // Start a task to async download batches if needed
         let weak_inner = Arc::downgrade(&inner);
@@ -591,7 +612,7 @@ impl Synchronizer {
                             };
 
                             let Some(inner) = weak_inner.upgrade() else {
-                                debug!("Synchronizer is shutting down.");
+                                println!("Synchronizer is shutting down.");
                                 return;
                             };
 
@@ -765,7 +786,7 @@ impl Synchronizer {
             .observe(header_to_certificate_duration);
 
         // NOTE: This log entry is used to compute performance.
-        debug!(
+        println!(
             "Header {:?} at round {} with {} batches, took {} seconds to be materialized to a certificate {:?}",
             certificate.header().digest(),
             certificate.header().round(),
@@ -912,7 +933,7 @@ impl Synchronizer {
             certificate = self.sanitize_certificate(certificate)?;
         }
 
-        debug!(
+        println!(
             "Processing certificate {:?} round:{:?}",
             certificate,
             certificate.round()
@@ -1010,7 +1031,7 @@ impl Synchronizer {
             .zip(exists.into_iter())
             .filter_map(|(c, exist)| {
                 if exist {
-                    debug!("Skip processing certificate {:?}", c);
+                    println!("Skip processing certificate {:?}", c);
                     inner.metrics.duplicate_certificates_processed.inc();
                     return None;
                 }
@@ -1037,7 +1058,7 @@ impl Synchronizer {
         let mut result = Ok(());
 
         for certificate in certificates {
-            debug!("Processing certificate {:?} with lock", certificate);
+            println!("Processing certificate {:?} with lock", certificate);
             let digest = certificate.digest();
 
             // Ensure parents are checked if !early_suspend.
@@ -1062,7 +1083,7 @@ impl Synchronizer {
             if certificate.round() > inner.gc_round.load(Ordering::Acquire) + 1 {
                 let missing_parents = inner.get_missing_parents(&certificate).await?;
                 if !missing_parents.is_empty() {
-                    debug!(
+                    println!(
                         "Processing certificate {:?} suspended: missing ancestors",
                         certificate
                     );
@@ -1207,7 +1228,7 @@ impl Synchronizer {
         is_certified: bool,
     ) -> DagResult<()> {
         if header.author() == inner.authority_id {
-            debug!("skipping sync_batches for header {header}: no need to sync payload from own workers");
+            println!("skipping sync_batches for header {header}: no need to sync payload from own workers");
             return Ok(());
         }
 

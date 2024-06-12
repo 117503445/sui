@@ -1,0 +1,30 @@
+## Node 1
+
+### Primary 1:
+./target/debug/narwhal-node run --primary-keys ./narwhal/crucible_validators/1/validator.txt --worker-keys ./narwhal/crucible_validators/1/worker.txt --primary-network-keys ./narwhal/crucible_validators/1/network.txt --committee ./narwhal/crucible_validators/committee.json --workers ./narwhal/crucible_validators/workers.json --store ./test primary
+
+### Worker 1:
+./target/debug/narwhal-node run --primary-keys ./narwhal/crucible_validators/1/validator.txt --primary-network-keys ./narwhal/crucible_validators/1/network.txt --worker-keys ./narwhal/crucible_validators/1/worker.txt --committee ./narwhal/crucible_validators/committee.json --workers ./narwhal/crucible_validators/workers.json --store ./test2 worker 0
+
+
+
+
+
+## Node 2
+
+### Primary 2:
+./target/debug/narwhal-node run --primary-keys ./narwhal/crucible_validators/2/validator.txt --worker-keys ./narwhal/crucible_validators/2/worker.txt --primary-network-keys ./narwhal/crucible_validators/2/network.txt --committee ./narwhal/crucible_validators/committee.json --workers ./narwhal/crucible_validators/workers.json --store ./test3 primary
+
+### Worker 2:
+./target/debug/narwhal-node run --primary-keys ./narwhal/crucible_validators/2/validator.txt --primary-network-keys ./narwhal/crucible_validators/2/network.txt --worker-keys ./narwhal/crucible_validators/2/worker.txt --committee ./narwhal/crucible_validators/committee.json --workers ./narwhal/crucible_validators/workers.json --store ./test4 worker 0
+
+
+
+
+## USAGE
+
+### Primary Node
+narwhal-node run --primary-keys <PRIMARY_KEYS> --primary-network-keys <PRIMARY_NETWORK_KEYS> --worker-keys <WORKER_KEYS> --committee <COMMITTEE> --workers <WORKERS> --store <STORE> primary
+
+### Worker Node
+narwhal-node run --primary-keys <PRIMARY_KEYS> --primary-network-keys <PRIMARY_NETWORK_KEYS> --worker-keys <WORKER_KEYS> --committee <COMMITTEE> --workers <WORKERS> --store <STORE> worker <ID>
