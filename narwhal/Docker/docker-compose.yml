@@ -1,11 +1,9 @@
-version: "3.9"
-
 services:
   # Setup for Validator 0. A primary node and a worker
   primary_0:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     image: narwhal-node:latest
     environment:
       - NODE_TYPE=primary
@@ -22,8 +20,8 @@ services:
       - ./validators/validator-0/logs:/home/logs
   worker_0:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     depends_on:
       - primary_0
     image: narwhal-node:latest
@@ -44,8 +42,8 @@ services:
   # Setup for Validator 1. A primary node and a worker
   primary_1:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     image: narwhal-node:latest
     environment:
       - NODE_TYPE=primary
@@ -62,8 +60,8 @@ services:
       - ./validators/validator-1/logs:/home/logs
   worker_1:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     depends_on:
       - primary_1
     image: narwhal-node:latest
@@ -84,8 +82,8 @@ services:
   # Setup for Validator 2. A primary node and a worker
   primary_2:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     image: narwhal-node:latest
     environment:
       - NODE_TYPE=primary
@@ -102,8 +100,8 @@ services:
       - ./validators/validator-2/logs:/home/logs
   worker_2:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     depends_on:
       - primary_2
     image: narwhal-node:latest
@@ -124,8 +122,8 @@ services:
   # Setup for Validator 3. A primary node and a worker
   primary_3:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     image: narwhal-node:latest
     environment:
       - NODE_TYPE=primary
@@ -142,8 +140,8 @@ services:
       - ./validators/validator-3/logs:/home/logs
   worker_3:
     build:
-      context: ../
-      dockerfile: ./Docker/Dockerfile
+      context: ../..
+      dockerfile: ./narwhal/Docker/Dockerfile
     depends_on:
       - primary_3
     image: narwhal-node:latest
