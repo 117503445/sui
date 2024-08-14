@@ -1,0 +1,15 @@
+# docker-compose.yml
+
+services:
+  sui-dev:
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
+    volumes:
+        - ./:/workspace
+        - sui-dev-vsc:/root/.vscode-server
+    stdin_open: true
+    tty: true
+
+volumes:
+  sui-dev-vsc:
