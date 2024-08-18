@@ -4512,65 +4512,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
-name = "examples2"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "async-trait",
- "axum",
- "base64 0.21.2",
- "bcs",
- "bytes",
- "chrono",
- "consensus-config",
- "consensus-core",
- "count-min-sketch",
- "dashmap",
- "diffy",
- "either",
- "enum_dispatch",
- "eyre",
- "fastcrypto",
- "futures",
- "im",
- "indexmap 2.1.0",
- "itertools 0.10.5",
- "jsonrpsee",
- "lru 0.10.0",
- "mockall",
- "mysten-network",
- "narwhal-config",
- "narwhal-types",
- "num_cpus",
- "object_store 0.7.0",
- "once_cell",
- "parking_lot 0.12.1",
- "prometheus",
- "rand 0.8.5",
- "reqwest",
- "roaring",
- "rocksdb",
- "scopeguard",
- "serde",
- "serde_json",
- "serde_with",
- "signature 1.6.4",
- "static_assertions",
- "sui-core",
- "sui-swarm-config",
- "sui-types",
- "tap",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-retry",
- "tokio-stream",
- "tracing",
- "twox-hash",
-]
-
-[[package]]
 name = "expect-test"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
