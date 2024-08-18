@@ -21,6 +21,7 @@ services:
       - ./validators:/validators
       - ./validators/validator-0/logs:/home/logs
       - ../../.target-docker/release/narwhal-node:/sui/bin/narwhal-node
+      - ./entry.sh:/sui/entry.sh
     # command: bash
     # tty: true
     # stdin_open: true

@@ -43,9 +43,11 @@ pub fn read_authority_keypair_from_file<P: AsRef<std::path::Path> + std::fmt::De
 pub fn read_keypair_from_file<P: AsRef<std::path::Path> + std::fmt::Debug>(
     path: P,
 ) -> anyhow::Result<SuiKeyPair> {
+    println!("path: {:?}", path);
     let contents = std::fs::read_to_string(path)?;
+    println!("contents: {:?}", contents);
     // SuiKeyPair::decode_base64(contents.as_str().trim()).map_err(|e| anyhow!(e))
-    SuiKeyPair::decode(contents.as_str().trim()).map_err(|e| anyhow!(e))
+    SuiKeyPair::decode_base64(contents.as_str().trim()).map_err(|e| anyhow!(e))
 }
 
 /// Read from file as Base64 encoded `flag || privkey` and return a NetworkKeyPair.
