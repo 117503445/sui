@@ -34,14 +34,14 @@ COPY --from=builder sui/target/${PROFILE}/narwhal-node bin/
 COPY --from=builder sui/target/${PROFILE}/narwhal-benchmark-client bin/
 
 # Copy the entry point file
-COPY narwhal/Docker/entry.sh ./
+# COPY narwhal/Docker/entry.sh ./
 
 # Now add the entry point
-CMD ./entry.sh
+CMD /entry.sh
 
 ARG BUILD_DATE
 ARG GIT_REVISION
 LABEL build-date=$BUILD_DATE
 LABEL git-revision=$GIT_REVISION
 
-CMD bash
+# CMD bash

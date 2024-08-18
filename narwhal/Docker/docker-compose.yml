@@ -18,6 +18,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-0/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   worker_0:
     build:
       context: ../..
@@ -39,6 +42,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-0/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   # Setup for Validator 1. A primary node and a worker
   primary_1:
     build:
@@ -58,6 +64,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-1/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   worker_1:
     build:
       context: ../..
@@ -79,6 +88,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-1/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   # Setup for Validator 2. A primary node and a worker
   primary_2:
     build:
@@ -98,6 +110,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-2/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   worker_2:
     build:
       context: ../..
@@ -119,6 +134,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-2/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   # Setup for Validator 3. A primary node and a worker
   primary_3:
     build:
@@ -138,6 +156,9 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-3/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true
   worker_3:
     build:
       context: ../..
@@ -159,3 +180,6 @@ services:
     volumes:
       - ./validators:/validators
       - ./validators/validator-3/logs:/home/logs
+      - ./entry.sh:/entry.sh
+    stdin_open: true
+    tty: true

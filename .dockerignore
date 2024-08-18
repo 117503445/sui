@@ -7,3 +7,5 @@ target/
 build/
 storage/
 docker/
+**/*docker-compose.yml
+logs
