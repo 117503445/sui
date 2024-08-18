@@ -338,18 +338,24 @@ impl Client {
         // Wait for all nodes to be online.
         let mut all_nodes = self.nodes.clone();
         all_nodes.push(self.target.clone());
-        join_all(all_nodes.iter().cloned().map(|address| {
-            info!("Waiting for {address} to be online...");
+        
+        let handles = all_nodes.iter().cloned().map(|address| {
+            let addr_str = address.to_string();
+            info!("Waiting for {} to be online...", addr_str);
             tokio::spawn(async move {
                 while TcpStream::connect(&*address.socket_addrs(|| None).unwrap())
                     .await
                     .is_err()
                 {
-                    sleep(Duration::from_millis(10)).await;
+                    info!("{} is not online yet, retrying...", addr_str);
+                    sleep(Duration::from_millis(100)).await;
                 }
+                info!("{} is now online!", addr_str);
             })
-        }))
-        .await;
+        });
+
+        join_all(handles).await;
+        info!("All nodes are now online!");
     }
 }
 

@@ -1,6 +1,3 @@
-# Copyright(C) Facebook, Inc. and its affiliates.
-# Copyright (c) Mysten Labs, Inc.
-# SPDX-License-Identifier: Apache-2.0
 from datetime import datetime, timezone
 from itertools import chain
 from dateutil import parser
@@ -11,13 +8,10 @@ from os.path import join
 from re import findall, search
 from statistics import mean
 
-
 from benchmark.utils import Print
-
 
 class ParseError(Exception):
     pass
-
 
 class LogParser:
     def __init__(self, clients, primaries, workers, faults=0):
@@ -41,8 +35,7 @@ class LogParser:
         except (ValueError, IndexError, AttributeError) as e:
             exception(e)
             raise ParseError(f'Failed to parse clients\' logs: {e}')
-        self.size, self.rate, self.start, misses, self.sent_samples \
-            = zip(*results)
+        self.size, self.rate, self.start, misses, self.sent_samples = zip(*results)
         self.misses = sum(misses)
 
         # Parse the primaries logs.
@@ -52,8 +45,7 @@ class LogParser:
         except (ValueError, IndexError, AttributeError) as e:
             exception(e)
             raise ParseError(f'Failed to parse nodes\' logs: {e}')
-        proposals, commits, self.configs, primary_ips, batch_to_header_latencies, header_creation_latencies, header_to_cert_latencies, cert_commit_latencies, request_vote_outbound_latencies = zip(
-            *results)
+        proposals, commits, self.configs, primary_ips, batch_to_header_latencies, header_creation_latencies, header_to_cert_latencies, cert_commit_latencies, request_vote_outbound_latencies = zip(*results)
         self.proposals = self._merge_results([x.items() for x in proposals])
         self.commits = self._merge_results([x.items() for x in commits])
         self.batch_to_header_latencies = {
@@ -109,10 +101,24 @@ class LogParser:
         if search(r'Error', log) is not None:
             raise ParseError('Client(s) panicked')
 
-        size = int(search(r'Transactions size: (\d+)', log).group(1))
-        rate = int(search(r'Transactions rate: (\d+)', log).group(1))
+        # Debugging: Print the log to check its content
+        print(f"Debug: Parsing log: {log}")
+        print(log)
 
-        tmp = search(r'(.*?) .* Start ', log).group(1)
+        size_match = search(r'Transactions size: (\d+)', log)
+        if size_match is None:
+            raise ParseError(f"Failed to find 'Transactions size' in log: {log}")
+        size = int(size_match.group(1))
+
+        rate_match = search(r'Transactions rate: (\d+)', log)
+        if rate_match is None:
+            raise ParseError(f"Failed to find 'Transactions rate' in log: {log}")
+        rate = int(rate_match.group(1))
+
+        start_match = search(r'(.*?) .* Start ', log)
+        if start_match is None:
+            raise ParseError(f"Failed to find 'Start' timestamp in log: {log}")
+        tmp = start_match.group(1)
         start = self._to_posix(tmp)
 
         misses = len(findall(r'rate too high', log))
@@ -121,6 +127,7 @@ class LogParser:
         samples = {int(s): self._to_posix(t) for t, s in tmp}
 
         return size, rate, start, misses, samples
+
 
     def _parse_primaries(self, log):
         if search(r'(?:panicked)', log) is not None:
@@ -342,7 +349,6 @@ class LogParser:
                 workers += [f.read()]
 
         return cls(clients, primaries, workers, faults=faults)
-
 
 class LogGrpcParser:
     def __init__(self, primaries, faults=0):

@@ -69,6 +69,7 @@ exclude = [
 ]
 
 members = [
+  "examples2",
   "consensus/config",
   "consensus/core",
   "crates/anemo-benchmark",

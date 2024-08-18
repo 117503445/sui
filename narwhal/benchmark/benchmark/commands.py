@@ -5,9 +5,7 @@ from os.path import join
 
 from benchmark.utils import PathMaker
 
-
 class CommandMaker:
-
     @staticmethod
     def cleanup():
         return (
@@ -33,18 +31,18 @@ class CommandMaker:
     @staticmethod
     def generate_key(filename):
         assert isinstance(filename, str)
-        return f'./narwhal-node generate_keys --filename {filename}'
+        return f'./narwhal-node generate-keys --filename {filename}'
 
     @staticmethod
     def get_pub_key(filename):
         assert isinstance(filename, str)
-        return f'./narwhal-node get_pub_key --filename {filename}'
+        return f'./narwhal-node get-pub-key --filename {filename}'
 
     @staticmethod
     def generate_network_key(filename):
         assert isinstance(filename, str)
-        return f'./narwhal-node generate_network_keys --filename {filename}'
-     
+        return f'./narwhal-node generate-network-keys --filename {filename}'
+
     @staticmethod
     def run_primary(primary_keys, primary_network_keys, worker_keys, committee, workers, store, parameters, debug=False):
         assert isinstance(primary_keys, str)
@@ -54,9 +52,15 @@ class CommandMaker:
         assert isinstance(workers, str)
         assert isinstance(parameters, str)
         assert isinstance(debug, bool)
-        v = '-vvv' if debug else '-vv'
-        return (f'./narwhal-node {v} run --primary-keys {primary_keys} --primary-network-keys {primary_network_keys} '
-                f'--worker-keys {worker_keys} --committee {committee} --workers {workers} --store {store} '
+        v = '-vvvvv'
+        log_level = 'debug'
+        print(f'RUST_LOG={log_level} ./narwhal-node {v} run --primary-keys {primary_keys} '
+                f'--primary-network-keys {primary_network_keys} --worker-keys {worker_keys} '
+                f'--committee {committee} --workers {workers} --store {store} '
+                f'--parameters {parameters} primary')
+        return (f'RUST_LOG={log_level} ./narwhal-node {v} run --primary-keys {primary_keys} '
+                f'--primary-network-keys {primary_network_keys} --worker-keys {worker_keys} '
+                f'--committee {committee} --workers {workers} --store {store} '
                 f'--parameters {parameters} primary')
 
     @staticmethod
@@ -68,20 +72,31 @@ class CommandMaker:
         assert isinstance(workers, str)
         assert isinstance(parameters, str)
         assert isinstance(debug, bool)
-        v = '-vvv' if debug else '-vv'
-        return (f'./narwhal-node {v} run --primary-keys {primary_keys} --primary-network-keys {primary_network_keys} '
-                f'--worker-keys {worker_keys} --committee {committee} --workers {workers} --store {store} '
+        v = '-vvvvv'
+        log_level = 'debug'
+        print(f'RUST_LOG={log_level} ./narwhal-node {v} run --primary-keys {primary_keys} '
+                f'--primary-network-keys {primary_network_keys} --worker-keys {worker_keys} '
+                f'--committee {committee} --workers {workers} --store {store} '
+                f'--parameters {parameters} worker --id {id}')
+        return (f'RUST_LOG={log_level} ./narwhal-node {v} run --primary-keys {primary_keys} '
+                f'--primary-network-keys {primary_network_keys} --worker-keys {worker_keys} '
+                f'--committee {committee} --workers {workers} --store {store} '
                 f'--parameters {parameters} worker --id {id}')
 
     @staticmethod
-    def run_client(address, size, rate, nodes):
+    def run_client(address, size, rate, nodes, client_metric_port=8081, debug=False):
         assert isinstance(address, str)
         assert isinstance(size, int) and size > 0
         assert isinstance(rate, int) and rate >= 0
         assert isinstance(nodes, list)
         assert all(isinstance(x, str) for x in nodes)
-        nodes = f'--nodes {" ".join(nodes)}' if nodes else ''
-        return f'./narwhal-benchmark-client {address} --size {size} --rate {rate} {nodes}'
+        nodes_str = f'--nodes "{",".join(nodes)}"' if nodes else ''
+        v = '-vvvvv'
+        log_level = 'debug'
+        print(f'RUST_LOG={log_level} ./narwhal-benchmark-client {v} --addr {address} --size {size} --rate {rate} '
+                f'{nodes_str} --client-metric-port {client_metric_port}')
+        return (f'RUST_LOG={log_level} ./narwhal-benchmark-client --addr {address} --size {size} --rate {rate} '
+                f'{nodes_str} --client-metric-port {client_metric_port}')
 
     @staticmethod
     def alias_demo_binaries(origin):
