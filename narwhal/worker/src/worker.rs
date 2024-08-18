@@ -85,6 +85,7 @@ impl Worker {
         metrics: Metrics,
         tx_shutdown: &mut PreSubscribedBroadcastSender,
     ) -> Vec<JoinHandle<()>> {
+        println!("Entering Worker::spawn");
         let worker_name = keypair.public().clone();
         let worker_peer_id = PeerId(worker_name.0.to_bytes());
         info!("Boot worker node with id {} peer id {}", id, worker_peer_id,);
@@ -319,6 +320,7 @@ impl Worker {
             .map(|(_, info)| (info.name, info.worker_address));
 
         // Add other workers we want to talk with to the known peers set.
+        println!("Calling Worker::add_peer_in_network for other workers");
         for (public_key, address) in other_workers {
             let (peer_id, address) = Self::add_peer_in_network(&network, public_key, &address);
             peer_types.insert(peer_id, "other_worker".to_string());
@@ -329,6 +331,7 @@ impl Worker {
         }
 
         // Connect worker to its corresponding primary.
+        println!("Calling Worker::add_peer_in_network for our primary");
         let (peer_id, address) = Self::add_peer_in_network(
             &network,
             authority.network_key(),

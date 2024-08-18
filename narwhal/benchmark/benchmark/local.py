@@ -11,9 +11,9 @@ from benchmark.config import LocalCommittee, NodeParameters, LocalWorkerCache, B
 from benchmark.logs import LogParser, ParseError
 from benchmark.utils import Print, BenchError, PathMaker
 
-
 class LocalBench:
     BASE_PORT = 3000
+    METRICS_BASE_PORT = 8081  # Base port for metrics
 
     def __init__(self, bench_parameters_dict, node_parameters_dict):
         try:
@@ -27,7 +27,7 @@ class LocalBench:
 
     def _background_run(self, command, log_file):
         name = splitext(basename(log_file))[0]
-        cmd = f'{command} 2> {log_file}'
+        cmd = f'{command} 2>&1 | tee {log_file}'
         subprocess.run(['tmux', 'new', '-d', '-s', name, cmd], check=True)
 
     def _kill_nodes(self):
@@ -105,20 +105,6 @@ class LocalBench:
 
             self.node_parameters.print(PathMaker.parameters_file())
 
-            # Run the clients (they will wait for the nodes to be ready).
-            workers_addresses = worker_cache.workers_addresses(self.faults)
-            rate_share = ceil(rate / worker_cache.workers())
-            for i, addresses in enumerate(workers_addresses):
-                for (id, address) in addresses:
-                    cmd = CommandMaker.run_client(
-                        address,
-                        self.tx_size,
-                        rate_share,
-                        [x for y in workers_addresses for _, x in y]
-                    )
-                    log_file = PathMaker.client_log_file(i, id)
-                    self._background_run(cmd, log_file)
-
             # Run the primaries (except the faulty ones).
             for i, address in enumerate(committee.primary_addresses(self.faults)):
                 cmd = CommandMaker.run_primary(
@@ -132,9 +118,11 @@ class LocalBench:
                     debug=debug
                 )
                 log_file = PathMaker.primary_log_file(i)
+                Print.info(f'Starting primary node {i} at {address}...')
                 self._background_run(cmd, log_file)
 
             # Run the workers (except the faulty ones).
+            workers_addresses = worker_cache.workers_addresses(self.faults)  # Ensure this is assigned before usage
             for i, addresses in enumerate(workers_addresses):
                 for (id, address) in addresses:
                     cmd = CommandMaker.run_worker(
@@ -149,7 +137,29 @@ class LocalBench:
                         debug=debug
                     )
                     log_file = PathMaker.worker_log_file(i, id)
+                    Print.info(f'Starting worker node {i} at {address}...')
                     self._background_run(cmd, log_file)
+
+            # Run the clients (they will wait for the nodes to be ready).
+            rate_share = ceil(rate / worker_cache.workers())
+
+            # Generate unique metric ports for each client
+            metric_port = self.METRICS_BASE_PORT
+
+            for i, addresses in enumerate(workers_addresses):
+                for (id, address) in addresses:
+                    cmd = CommandMaker.run_client(
+                        address,
+                        self.tx_size,
+                        rate_share,
+                        [x for y in workers_addresses for _, x in y],
+                        metric_port,
+                        debug=debug
+                    )
+                    log_file = PathMaker.client_log_file(i, id)
+                    Print.info(f'Starting client for worker node {i} at {address} with metric port {metric_port}...')
+                    self._background_run(cmd, log_file)
+                    metric_port += 1  # Increment port for the next client
 
             # Wait for all transactions to be processed.
             Print.info(f'Running benchmark ({self.duration} sec)...')

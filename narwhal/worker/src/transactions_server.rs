@@ -92,7 +92,8 @@ impl<V: TransactionValidator> TxServer<V> {
                     }
 
                     error!(
-                        "Couldn't boot transactions server at try {}, will wait {}s and retry: {}",
+                        "Couldn't boot transactions server at address {} at try {}, will wait {}s and retry: {}",
+                        &self.address,
                         retries,
                         RETRY_BACKOFF.as_secs_f64(),
                         err
